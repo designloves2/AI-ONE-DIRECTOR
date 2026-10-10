@@ -67,6 +67,11 @@ with ffmpeg. In-video text that is reviewed = only text that already exists in t
   - This guarantees cross-shot character and product consistency while maintaining clean focus per shot.
   - If a human character appears in any shot (e.g. eating, reacting), a realistic character reference MUST be in the pool, injected alongside the product via H3 multi-reference (`<Picture 1>`, `<Picture 2>`).
   - The owner's attached images (e.g. product) are used as-is; all missing assets are generated with Krea2. Drama: build a character reference sheet first, use it in every shot.
+- **Canonical Prompt Rules (`skills/prompt-rules.md`, resource: `director://skills/prompts`)**:
+  - Prompt authoring is decoupled into its own dedicated specification file so prompt rules can be updated independently.
+  - Every prompt MUST follow the 3 structured fields: `integrated_multimodal_description`, `overall_soundscape`, and `non_diegetic_music`.
+  - All spoken audio, dialogue, and voiceover MUST be placed inside `integrated_multimodal_description` with speaker IDs `(S1)` and `<d>[Korean]...</d>` markup. Voiceover specifies lips remain closed. Without this markup, H3 will NOT synthesize speech.
+  - Foley goes into `overall_soundscape`, BGM into `non_diegetic_music`.
 
 ## Genre profiles (short files, load only the requested one)
 Common pipeline; a profile sets: default aspect + length range, scenario principle, review weights + instant-fail items,
