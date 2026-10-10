@@ -10,11 +10,13 @@
 *A standard 30-second commercial consists of 4 to 6 varied, fast-paced shots (e.g. 4s + 8s + 5s + 8s + 5s = 30s). Never uniformly slice into 10s x 3.*
 
 ## Key Rules
+- **Natural Spoken Korean Dialogue (구어체 대사 원칙)**:
+  - **No Stiff Brochure Language**: 절대 딱딱한 안내문 문어체를 쓰지 않습니다. 실제 사람이 말하는 생생한 감탄사와 구어체로 대사를 구성합니다.
+  - **Rich Voice Profiling**: 화자 ID `(S1)` 앞에 연령, 성별, 감정 상태, 음색(Timbre), 호흡/속도(Cadence)를 3개 이상의 형용사로 서술하여 로봇 톤을 제거합니다.
 - **Reference Asset Pool & Selective Shot Mapping**:
   - Pre-generate an asset pool (product angles, macro cross-section, character expressions, packaging/tray) using **Krea2**.
   - **Do NOT inject all images identically to every shot.**
   - Selectively map only the necessary reference images (and differing counts: 1~3 images) per shot from this shared pool.
-  - This ensures cross-shot consistency while keeping each shot cleanly focused on its specific visual action.
 - **Product Match is Critical**: Product shape, colors, and package logo MUST match the reference image. Any deviation is an instant fail.
 - **Mandatory Human Character Reference (Krea2)**:
   - If a human model/customer appears, pre-generate realistic character reference image(s) with **Krea2** into the asset pool.

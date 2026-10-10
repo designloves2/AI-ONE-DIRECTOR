@@ -18,12 +18,15 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 
 ## Flow (details live in the core resource)
 `project_init` -> scenario/shot list (`project_save_scenario`)
+   - **Dialogue must be written in natural, living spoken Korean (구어체 대사)** — no stiff brochure copy.
 -> **Pre-generate Reference Asset Pool (Krea2 Default)**:
    - Identify ALL unique visual assets across the entire video (e.g. product front, cross-section/macro, character eating, character smiling, tray/packaging; e.g. 3~6 images).
    - Generate all of them up front with **Krea2 (`generate_image_krea2`)** into `refs/`.
 -> per shot: `generate_video_h3`
    - Prompt MUST strictly follow `director://skills/prompts`:
-     - `integrated_multimodal_description`: visuals, camera motion, and **all dialogue/voiceover** formatted as `(S1) says: <d>[Korean]...</d>` or `(S1) says in an off-screen voiceover: <d>[Korean]...</d> while lips remain closed`.
+     - `integrated_multimodal_description`: visuals, camera motion, and **richly profiled spoken voice**:
+       - On-screen: `A lively 20s Korean female food creator with an excited, breathy bright timbre and smiling intonation (S1) says: <d>[Korean] 와... 불고기 불향 미쳤다, 진짜!</d>`
+       - Voiceover: `A friendly and charismatic 30s Korean commercial voiceover artist with a warm smiling tone and rich baritone resonance (S1) says in an off-screen voiceover: <d>[Korean] 오늘 점심 고민 끝! 따끈따끈 정갈한 맥도시락.</d> while lips remain closed.`
      - `overall_soundscape`: foley, physical actions, and ambience (no speech, no BGM).
      - `non_diegetic_music`: background music instrumentation, tempo, and rhythm.
    - Selectively inject ONLY the relevant references from the pool for that specific shot (e.g. [1,3] for shot 1; [1,2] for shot 2; [1,4,5] for shot 3).
@@ -32,10 +35,12 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 -> `project_save_report`.
 
 ## Hard rules
+- **NATURAL SPOKEN DIALOGUE & RICH VOICE PROFILING**:
+  - **No Stiff Brochure Language**: Never write textbook/brochure copy (`"특별한 한 끼를 원할 땐?"`). Write authentic, living spoken Korean with emotional exclamations (`"와... 대박!"`, `"음~! 육즙 미쳤다!"`, `"아... 영혼까지 털렸다..."`), breath pauses, and natural cadences.
+  - **Multi-Dimensional Voice Actor Profiling**: Always describe the speaker before `(S1)` with [Age/Gender] + [Emotional State] + [Timbre (raspy, breathy, bright, deep baritone)] + [Cadence & Breath (fast, smiling tone, weary sighing)], eliminating mechanical robotic synthesis.
 - **CANONICAL PROMPT & AUDIO RULES (`director://skills/prompts`)**:
   - MiniMax H3 will NOT synthesize speech without explicit `<d>[Korean]...</d>` tags and speaker IDs `(S1)` inside `integrated_multimodal_description`.
   - Always separate Foley (`overall_soundscape`) and BGM (`non_diegetic_music`) from dialogue.
-  - Follow the dedicated prompt rules file for all camera, audio, and reference tagging syntax.
 - **STRICT PACING (NEVER 10s x 3)**: Never mechanically divide total length equally (e.g. **30s -> 10s x 3 is FORBIDDEN**; 15s -> 5s x 3 is FORBIDDEN). 30-second commercials must have **4 to 6 dynamic shots** with varying lengths tailored to the emotional beat:
   - **Hook**: 3 ~ 5s (snappy, eye-catching, never dragging for 10s)
   - **Macro Sizzle**: 6 ~ 9s (deep appetizing texture)
@@ -46,7 +51,6 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
   - Do NOT apply the same image uniformly to every shot.
   - Pre-generate an asset pool (3~6 images) covering all needed subjects/angles with Krea2 up front.
   - Inject only the necessary references (and differing counts per shot, e.g. 1~3 images) for each clip from this shared pool.
-  - This ensures cross-shot consistency (reusing identical character/product assets) while keeping each shot cleanly focused on its specific visual action.
 - Review is one look, one verdict: PASS/FAIL per item + one-line fail reason. Never re-review a passed clip.
 - Numbers first (ffprobe/STT). Numeric fail -> regenerate without looking.
 - Max 3 attempts per clip; then ADOPT the best attempt, flag it in the report, keep going. Never stop to ask.

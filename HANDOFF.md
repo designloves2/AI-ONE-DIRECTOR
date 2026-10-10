@@ -70,7 +70,8 @@ with ffmpeg. In-video text that is reviewed = only text that already exists in t
 - **Canonical Prompt Rules (`skills/prompt-rules.md`, resource: `director://skills/prompts`)**:
   - Prompt authoring is decoupled into its own dedicated specification file so prompt rules can be updated independently.
   - Every prompt MUST follow the 3 structured fields: `integrated_multimodal_description`, `overall_soundscape`, and `non_diegetic_music`.
-  - All spoken audio, dialogue, and voiceover MUST be placed inside `integrated_multimodal_description` with speaker IDs `(S1)` and `<d>[Korean]...</d>` markup. Voiceover specifies lips remain closed. Without this markup, H3 will NOT synthesize speech.
+  - **Natural Spoken Korean (구어체 대사 원칙)**: Stiff brochure copy (`"특별한 한 끼를 원할 땐?"`) is strictly banned. Must write living conversational Korean with natural pauses, emotional exclamations (`"와... 대박!"`, `"음~! 육즙 미쳤다!"`, `"아... 오늘 진짜 다 털렸다..."`).
+  - **Voice Actor Profiling (화자 음향 묘사)**: All spoken audio/voiceover in `integrated_multimodal_description` MUST describe the speaker before `(S1)` with [Age/Gender] + [Emotional State] + [Timbre (raspy, breathy, bright, deep baritone)] + [Cadence & Breath (fast, smiling tone, weary sighing)], using `<d>[Korean]...</d>` markup. Voiceover specifies lips remain closed. Without this detailed profile, H3 produces flat robotic voices.
   - Foley goes into `overall_soundscape`, BGM into `non_diegetic_music`.
 
 ## Genre profiles (short files, load only the requested one)

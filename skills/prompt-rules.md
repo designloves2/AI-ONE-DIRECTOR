@@ -5,23 +5,33 @@ All rules are directly grounded in the official guides from [ComfyUI-Prompt-Stud
 
 ---
 
-## 1. Image Generation Prompt Rules (Krea 2 Default)
-*Reference: `skills/prompt_guides/krea_2/t2i.md`*
+## 1. Natural Spoken Dialogue & Rich Voice Actor Profiling (CRITICAL)
 
-### Core Philosophy
-- **Natural Language Prose Wins**: Write full sentences and flowing descriptive paragraphs. **Never use comma-separated keyword tag soup** (e.g. `1girl, solo, 8k, masterpiece, trending on artstation` is strictly banned).
-- **Concrete Grounding over Abstract Words**: Do not use vague fluff words like "cinematic", "epic", "beautiful". Instead, explicitly describe concrete lighting setups, camera lenses, surface textures, material physics, and colors.
+### A. [금지: 딱딱한 안내문/광고 책자 문어체 금지]
+- ❌ **로봇 같은 문어체 (BANNED)**:
+  `"오늘 점심, 특별한 한 끼를 원할 땐?"`, `"정성을 가득 담은 한식 도시락."`, `"한 모금에 깨어나는 에너지."`
+  *이러한 교과서적/홍보책자 문구는 AI가 읽을 때 심각하게 기계적이고 로봇 같은 국어책 읽기 톤을 유발합니다.*
 
-### The 8-Layer Prompt Structure
-Fold these layers into connected English prose:
-1. **Subject**: Who/what is the focus with defining features (e.g. `A weathered Korean fisherman in his sixties with salt-crusted grey stubble`).
-2. **Action / Pose**: Exact posture and orientation (e.g. `Holding a hot steamed Korean bento with two hands, steam rising into the air`).
-3. **Setting / Environment**: Background and environment details (e.g. `Seated at a clean sunlit wooden dining table next to a large cafe window`).
-4. **Composition / Framing**: Shot type and depth of field (e.g. `Eye-level medium close-up shot, shallow depth of field, food in razor sharp focus`).
-5. **Medium / Style**: Specific photography or art medium (e.g. `35mm commercial documentary photograph, soft film grain`).
-6. **Lighting**: Source, direction, and color temperature (e.g. `Warm golden morning sunlight from the side, soft diffuse shadows`).
-7. **Color & Texture**: Palette, material qualities, surface sheen (e.g. `Glistening glazed sauce on tender meat, plump translucent rice grains, natural skin pores`).
-8. **Extra Grounding Details**: Tiny anchors of realism (e.g. `Delicate condensation droplets on the water glass, faint rising steam curls`).
+### B. [필수: 생생한 생활 밀착형 구어체 & 감정 추임새]
+- ✅ **살아있는 대화체 (MANDATORY)**:
+  - 실제 사람이 감정을 담아 내뱉는 생생한 입말, 감탄사(`와~`, `음~!`, `크으~`, `헐`), 말줄임표(`...`), 쉼표(`,`), 호흡을 적극 활용합니다.
+  - **피로/야근 상황**: `<d>[Korean] 아... 오늘 진짜 영혼까지 다 털렸다... 어? 이거 뭐야?</d>`
+  - **각성/에너지 폭발**: `<d>[Korean] 크으~! 눈이 번쩍 뜨이는데?! 바로 야근 끝내러 간다!</d>`
+  - **음식 시식/먹방**: `<d>[Korean] 와... 김 모락모락 나는 것 좀 봐... 불고기 불향 미쳤다, 진짜!</d>`
+  - **친근한 나레이션**: `<d>[Korean] 오늘 점심 뭐 먹을지 고민 끝! 든든하고 정갈한 맥도시락, 오늘 무조건 각이지.</d>`
+
+### C. Multi-Dimensional Voice Actor Profiling (화자 음향 묘사 4대 요소)
+단순히 `a Korean woman`이나 `a narrator`로 적으면 H3 음성 합성 엔진이 무미건조한 기본 기계음을 출력합니다.
+반드시 화자 ID `(S1)` 앞에 **[연령/성별] + [감정/상황 상태] + [음색(Timbre)] + [호흡/말하기 템포(Cadence & Breath)]**를 입체적으로 서술해야 합니다:
+
+1. **지치고 피곤한 20대 남성 직장인**:
+   `A tired 20s Korean male office worker with an exhausted, raspy sighing voice and heavy weary breathing (S1) says: <d>[Korean] 아... 오늘 진짜 영혼까지 탈탈 털렸다...</d>`
+2. **신선함과 맛에 감탄하는 20대 여성 크리에이터**:
+   `A lively 20s Korean female food creator with an excited, breathy bright timbre, smiling intonation, and fast conversational cadence (S1) says: <d>[Korean] 와... 김 모락모락 나는 것 좀 봐... 불고기 불향 미쳤다, 진짜!</d>`
+3. **자신감 넘치고 에너지 폭발하는 직장인**:
+   `The energized Korean office worker with an excited, roaring resonant voice, confident grin, and powerful punchy delivery (S1) says: <d>[Korean] 크으~! 눈이 번쩍 뜨이는데?! 초광속으로 끝내버리자!</d>`
+4. **세련되고 따뜻한 30대 성우 나레이션 (Voiceover)**:
+   `A friendly and charismatic 30s Korean commercial voiceover artist with a warm smiling tone, rich baritone resonance, and relaxed conversational cadence (S1) says in an off-screen voiceover: <d>[Korean] 오늘 점심 고민 끝! 따끈따끈 정갈한 맥도시락, 지금 바로 만나보세요.</d> while the actors on screen have their lips completely closed.`
 
 ---
 
@@ -39,7 +49,7 @@ non_diegetic_music: ...
 ```
 
 ### A. `integrated_multimodal_description` (Visuals + Camera + Speech)
-Contains visual style, subjects, camera motions, and **ALL human speech (dialogue and voiceover)**.
+Contains visual style, subjects, camera motions, and **ALL human speech (dialogue and voiceover)** formatted according to Section 1 above.
 
 #### 1) Camera Motion Grammar
 Use: `[Motion Type] + [Amplitude] + [Speed]`
@@ -47,17 +57,7 @@ Use: `[Motion Type] + [Amplitude] + [Speed]`
 - *Amplitude & Speed*: `with small/large amplitude`, `at slow/fast speed`.
 - *Example*: `The camera pushes in with small amplitude at slow speed toward the steaming dish.`
 
-#### 2) Spoken Dialogue & Voiceover (CRITICAL FOR AUDIO)
-**Without this exact markup, the H3 audio model WILL NOT synthesize human voices.**
-- **Speaker ID**: Assign a unique ID to each speaking entity: `(S1)`, `(S2)`.
-- **On-screen Character Speaking**:
-  - *Syntax*: `The young Korean woman with a bright, cheerful voice (S1) says: <d>[Korean] 정말 맛있다!</d>`
-- **Off-screen Narration / Voiceover (성우 나레이션)**:
-  - Must use the phrase `says in an off-screen voiceover`.
-  - Must state that on-screen characters' lips remain closed.
-  - *Syntax*: `A professional Korean narrator with a warm, trustworthy voice (S1) says in an off-screen voiceover: <d>[Korean] 오늘 점심, 정성을 가득 담은 맥도시락.</d> while the characters on screen have their lips completely closed.`
-
-#### 3) Multi-Reference Anchors
+#### 2) Multi-Reference Anchors
 Designate reference images as `<Picture 1>`, `<Picture 2>`, `<Picture 3>`.
 - *Example*: `The customer hands <Picture 1> the energy drink can to the young woman shown in <Picture 2>.`
 
@@ -73,10 +73,8 @@ Designate reference images as `<Picture 1>`, `<Picture 2>`, `<Picture 3>`.
 
 ---
 
-## 3. Dedicated Guide Files in Repository
-- `skills/prompt_guides/krea_2/t2i.md`: Full Krea 2 official prompt guide
-- `skills/prompt_guides/minimax_h3/base.md`: MiniMax H3 T2VA / I2VA / FL2VA / L2VA prompt guide
-- `skills/prompt_guides/minimax_h3/ref.md`: MiniMax H3 Ref2VA 6-section full reference rewrite guide
-- `skills/prompt_guides/qwen_image_2.1/t2i.md`: Qwen Image 2.1 T2I 8-step guide
-- `skills/prompt_guides/qwen_image_2.1/edit.md`: Qwen Image 2.1 Image Edit guide
-- `skills/prompt_guides/anima/t2i.md`: Anima T2I prompt guide
+## 3. Image Generation Prompt Rules (Krea 2 Default)
+*Reference: `skills/prompt_guides/krea_2/t2i.md`*
+
+- **Natural Language Prose Wins**: Write full sentences and flowing descriptive paragraphs. **Never use comma-separated keyword tag soup**.
+- **8-Layer Prompt Structure**: `[Subject] + [Action/Pose] + [Setting/Environment] + [Composition/Framing] + [Medium/Style] + [Lighting] + [Color & Texture] + [Extra Grounding Details]`.
