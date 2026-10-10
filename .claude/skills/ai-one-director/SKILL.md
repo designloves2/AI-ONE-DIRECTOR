@@ -25,9 +25,14 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 -> `project_save_report`.
 
 ## Hard rules
+- **STRICT PACING (NEVER 10s x 3)**: Never mechanically divide total length equally (e.g. **30s -> 10s x 3 is FORBIDDEN**; 15s -> 5s x 3 is FORBIDDEN). 30-second commercials must have **4 to 6 dynamic shots** with varying lengths tailored to the emotional beat:
+  - **Hook**: 3 ~ 5s (snappy, eye-catching, never dragging for 10s)
+  - **Macro Sizzle**: 6 ~ 9s (deep appetizing texture)
+  - **Customer Reaction**: 3 ~ 5s (punchy genuine delight)
+  - **Lifestyle / Story Action**: 5 ~ 8s (context and benefit)
+  - **Hero Ending**: 4 ~ 6s (brand lock and slogan)
 - **ALL References Generated (Krea2 Default)**: Never generate only 1 generic product reference if human characters or specific environments appear. Generate character references with Krea2 so human skin/expressions look real and natural, not generic plastic AI faces.
 - **Multi-Reference Injection**: When a shot includes both a product and a character, inject BOTH (`refImages: [refProduct, refCharacter]`) and label them `<Picture 1>` and `<Picture 2>` in the prompt.
-- Shots come from the scenario, never from slicing total length. 5-10 s each, one line "why this length" per shot.
 - Review is one look, one verdict: PASS/FAIL per item + one-line fail reason. Never re-review a passed clip.
 - Numbers first (ffprobe/STT). Numeric fail -> regenerate without looking.
 - Max 3 attempts per clip; then ADOPT the best attempt, flag it in the report, keep going. Never stop to ask.

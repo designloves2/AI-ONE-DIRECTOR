@@ -47,12 +47,17 @@ with ffmpeg. In-video text that is reviewed = only text that already exists in t
 
 ## Video rules (local backend, one GPU, clips run one after another)
 - Default method: **7+1** (7 turbo steps at Start MP, latent upscale, 1 step at Final MP), **0.5 MP -> 1.6 MP**.
-  Sweet spot = a **10 s** clip; each clip is 5-10 s depending on the shot. Defaults live in the MCP video tool; Claude may
-  override for a shot, but default is the norm. Portrait (9:16) = same MP, only aspect changes.
-- **Shots come from the scenario, never from dividing the total length.** Decide the shots first, then each shot's length
-  (5-10 s) for what that shot needs; write one line "why this length" per shot. 10 s x 3 is fine if the scenario produces
-  it; length-first slicing is not. Examples (both valid): intro 5 / main 10 / copy 5 / person 5 / ending 5; or intro 10 /
-  narration 5 / product explanation 10 / ending 5. Total length is fitted in the edit step, not by padding shots.
+  Clips are variable length (**3 to 10 seconds**). Portrait (9:16) = same MP, only aspect changes.
+- **STRICT PACING (NEVER 10s x 3 mechanical slicing)**: Shots come from the scenario beats, NEVER from dividing total length.
+  Dividing total length into identical chunks (e.g. 30s -> 10s x 3) is strictly FORBIDDEN.
+  Commercials demand varying rhythmic beats:
+  - **Hook / Intro**: **3 ~ 5s** (fast, impactful opening)
+  - **Product Macro / Sizzle**: **6 ~ 9s** (deep appetizing texture)
+  - **Customer Tasting Reaction**: **3 ~ 5s** (snappy genuine delight)
+  - **Lifestyle / Story Context**: **5 ~ 8s** (situational action)
+  - **Hero Ending**: **4 ~ 6s** (brand lock and slogan)
+  A standard 30-second commercial should consist of **4 to 6 dynamic shots** (e.g. 4s + 8s + 5s + 8s + 5s = 30s).
+  Decide each shot's duration for what that specific beat needs; write one line "why this length" per shot.
 - Shot list = the single artifact of the scenario step. Per shot: purpose, length (+why), scene, needed reference images,
   narration/dialogue, music yes/no. Every later step works from this table.
 - Reference images for video: **Krea2 (`generate_image_krea2`) is the mandatory default engine**.

@@ -1,10 +1,13 @@
 # GENRE PROFILE: AD (Commercial)
 
-## Structure
-1. **Hook (5-10s)**: Eye-catching opening, problem statement, or sensory hook.
-2. **Product Reveal & Macro (5-10s)**: Clear, beautiful presentation of the product. Strict adherence to reference shape/logo/texture.
-3. **Benefit / Delight Demonstration (5-10s)**: Real human customer/model tasting, enjoying, or demonstrating the product with genuine emotion.
-4. **Call To Action / Ending (5s)**: Brand tagline, hero package lock, clear call to action.
+## Pacing & Structure (Dynamic Rhythms, NEVER 10s x 3)
+1. **Hook (3-5s)**: Eye-catching opening, problem statement, or sensory contrast. Must be snappy (3~5s), never a slow 10-second drag.
+2. **Product Reveal & Macro Sizzle (6-9s)**: Deep, mouthwatering food/product texture, soundscape, and lighting.
+3. **Benefit / Delight Reaction (3-5s)**: Real customer tasting, reacting with genuine emotion.
+4. **Lifestyle / Usage Context (5-8s)**: Sharing with friends, dynamic energy, or situational joy.
+5. **Call To Action & Ending (4-6s)**: Brand tagline, hero package lock, clear call to action.
+
+*A standard 30-second commercial consists of 4 to 6 varied, fast-paced shots (e.g. 4s + 8s + 5s + 8s + 5s = 30s). Never uniformly slice into 10s x 3.*
 
 ## Key Rules
 - **Product Match is Critical**: Product shape, colors, and package logo MUST match the reference image. Any deviation is an instant fail.
