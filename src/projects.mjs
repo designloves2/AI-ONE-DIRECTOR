@@ -93,6 +93,76 @@ export function getClipDir(projectName, clipIndex, attemptIndex = null) {
   return clipDir;
 }
 
+export function saveClipPromptRecord(projectName, clipIndex, attemptIndex, record) {
+  const attemptDir = getClipDir(projectName, clipIndex, attemptIndex);
+
+  // 1. Write prompt.json
+  const promptJsonPath = path.join(attemptDir, 'prompt.json');
+  fs.writeFileSync(promptJsonPath, JSON.stringify(record, null, 2), 'utf8');
+
+  // 2. Write human-readable prompt.txt
+  const promptTxtPath = path.join(attemptDir, 'prompt.txt');
+
+  const refLines = (record.refImages || []).map((img, idx) => {
+    const filename = path.basename(img);
+    return `<Picture ${idx + 1}>: ${filename} (Path: ${img})`;
+  }).join('\n') || 'None';
+
+  let descText = '';
+  let soundText = '';
+  let musicText = '';
+
+  if (typeof record.prompt === 'string') {
+    descText = record.prompt;
+  } else if (record.prompt && typeof record.prompt === 'object') {
+    descText = record.prompt.integrated_multimodal_description || '';
+    soundText = record.prompt.overall_soundscape || '';
+    musicText = record.prompt.non_diegetic_music || '';
+  }
+
+  const txtContent = `================================================================================
+AI ONE DIRECTOR — CLIP PROMPT RECORD
+Project: ${projectName} | Clip: ${clipIndex} | Attempt: ${attemptIndex}
+Mode: ${record.mode || 'ref2va'} | Duration: ${record.durationSeconds || 10}s | Seed: ${record.seed ?? 'N/A'}
+Generated Video: ${record.videoPath ? path.basename(record.videoPath) : 'pending/dry_run'}
+Timestamp: ${record.timestamp || new Date().toISOString()}
+================================================================================
+
+--- [USED REFERENCE IMAGES] ---
+${refLines}
+
+--- [integrated_multimodal_description] ---
+${descText}
+
+--- [overall_soundscape] ---
+${soundText || 'N/A'}
+
+--- [non_diegetic_music] ---
+${musicText || 'N/A'}
+================================================================================
+`;
+
+  fs.writeFileSync(promptTxtPath, txtContent, 'utf8');
+
+  // 3. Update project.json state
+  const state = getProjectState(projectName);
+  const padClip = String(clipIndex).padStart(2, '0');
+  const clipKey = `clip${padClip}`;
+  if (!state.clips[clipKey]) state.clips[clipKey] = {};
+  if (!state.clips[clipKey].attempts) state.clips[clipKey].attempts = {};
+
+  const attemptKey = `attempt${attemptIndex}`;
+  state.clips[clipKey].attempts[attemptKey] = {
+    ...record,
+    refFilenames: (record.refImages || []).map(p => path.basename(p)),
+    promptJsonPath,
+    promptTxtPath
+  };
+
+  updateProjectState(projectName, { clips: state.clips });
+  return { promptJsonPath, promptTxtPath };
+}
+
 export function saveClipReview(projectName, clipIndex, reviewData) {
   const clipDir = getClipDir(projectName, clipIndex);
   const reviewPath = path.join(clipDir, 'review.json');

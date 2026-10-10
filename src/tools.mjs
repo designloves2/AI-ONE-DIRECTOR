@@ -328,6 +328,76 @@ export function registerTools(server) {
 
       const videoFile = res.localFiles?.find(f => f.endsWith('.mp4')) || res.localFiles?.[0] || 'dry_run_ok';
 
+      // Record prompt and used reference filenames as files
+      const refList = (refImages || []).map((refPath, idx) => {
+        const clean = sanitizePath(refPath, projectName);
+        return {
+          index: idx + 1,
+          label: `<Picture ${idx + 1}>`,
+          filename: path.basename(clean),
+          fullPath: clean
+        };
+      });
+
+      const pObj = typeof prompt === 'string' ? { integrated_multimodal_description: prompt } : prompt;
+      const promptRecord = {
+        projectName,
+        clipIndex,
+        attemptIndex,
+        mode,
+        durationSeconds,
+        aspect,
+        references: refList,
+        prompt: pObj,
+        firstFrame: firstFrame ? path.basename(firstFrame) : null,
+        lastFrame: lastFrame ? path.basename(lastFrame) : null,
+        seed: res.seed,
+        videoPath: videoFile,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        fs.writeFileSync(path.join(attemptDir, 'prompt.json'), JSON.stringify(promptRecord, null, 2), 'utf8');
+
+        const refLines = refList.length > 0
+          ? refList.map(r => `  ${r.label}: ${r.filename} (${r.fullPath})`).join('\n')
+          : '  None';
+
+        const promptText = `================================================================================
+CLIP PROMPT & REFERENCE SPECIFICATION
+================================================================================
+Project:   ${projectName}
+Clip:      Shot ${clipIndex} (Attempt ${attemptIndex})
+Duration:  ${durationSeconds}s | Mode: ${mode} | Aspect: ${aspect}
+Seed:      ${res.seed || 'random'}
+Timestamp: ${promptRecord.timestamp}
+
+--------------------------------------------------------------------------------
+1. USED REFERENCE IMAGES
+--------------------------------------------------------------------------------
+${refLines}
+
+--------------------------------------------------------------------------------
+2. INTEGRATED MULTIMODAL DESCRIPTION (Visuals, Camera & Spoken Voice)
+--------------------------------------------------------------------------------
+${pObj.integrated_multimodal_description || pObj.prompt || ''}
+
+--------------------------------------------------------------------------------
+3. OVERALL SOUNDSCAPE (Foley & Ambience)
+--------------------------------------------------------------------------------
+${pObj.overall_soundscape || 'N/A'}
+
+--------------------------------------------------------------------------------
+4. NON-DIEGETIC MUSIC (BGM)
+--------------------------------------------------------------------------------
+${pObj.non_diegetic_music || 'N/A'}
+================================================================================
+`;
+        fs.writeFileSync(path.join(attemptDir, 'prompt.txt'), promptText, 'utf8');
+      } catch (err) {
+        console.error('Error saving prompt record files:', err);
+      }
+
       return formatToolResponse({
         ok: true,
         videoPath: videoFile,

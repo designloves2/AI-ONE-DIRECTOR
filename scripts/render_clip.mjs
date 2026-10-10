@@ -20,13 +20,25 @@ fs.writeFileSync(statusFile, JSON.stringify({ status: 'running', startTime: Date
 
 const attemptDir = getClipDir(projName, clipIndex, attemptIndex);
 
+const pDesc = typeof shot.scenePrompt === 'string'
+  ? shot.scenePrompt
+  : (shot.scenePrompt?.integrated_multimodal_description || shot.prompt?.integrated_multimodal_description || '');
+
+const pSound = typeof shot.speech === 'string'
+  ? shot.speech
+  : (shot.scenePrompt?.overall_soundscape || shot.prompt?.overall_soundscape || 'Dynamic commercial soundscape');
+
+const pMusic = shot.music
+  ? (typeof shot.music === 'string' ? shot.music : (shot.scenePrompt?.non_diegetic_music || 'Energetic modern electronic rock beat'))
+  : 'N/A';
+
 const job = {
   mode: 'ref2va',
   durationSeconds: shot.durationSeconds || 10,
   prompt: {
-    integrated_multimodal_description: shot.scenePrompt,
-    overall_soundscape: shot.speech || 'Dynamic commercial soundscape',
-    non_diegetic_music: shot.music ? 'Energetic modern electronic rock beat' : ''
+    integrated_multimodal_description: pDesc,
+    overall_soundscape: pSound,
+    non_diegetic_music: pMusic
   },
   refImages: shot.refImages || [],
   hiresFinish: true,
@@ -40,10 +52,75 @@ console.log(`[RENDER START] Project: ${projName}, Clip: ${clipIndex}, Attempt: $
 generateH3(job, { outDir: attemptDir })
   .then(res => {
     console.log(`[RENDER DONE] Clip: ${clipIndex}, ok: ${res.ok}`);
+    const videoFile = res.localFiles?.find(f => f.endsWith('.mp4')) || res.localFiles?.[0];
+
+    // Reference files mapping
+    const refList = (shot.refImages || []).map((refPath, idx) => ({
+      index: idx + 1,
+      label: `<Picture ${idx + 1}>`,
+      filename: path.basename(refPath),
+      fullPath: path.resolve(refPath)
+    }));
+
+    const promptRecord = {
+      projectName: projName,
+      clipIndex,
+      attemptIndex,
+      mode: job.mode,
+      durationSeconds: job.durationSeconds,
+      references: refList,
+      prompt: job.prompt,
+      seed: res.seed,
+      videoPath: videoFile,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      fs.writeFileSync(path.join(attemptDir, 'prompt.json'), JSON.stringify(promptRecord, null, 2), 'utf8');
+
+      const refLines = refList.length > 0
+        ? refList.map(r => `  ${r.label}: ${r.filename} (${r.fullPath})`).join('\n')
+        : '  None';
+
+      const promptText = `================================================================================
+CLIP PROMPT & REFERENCE SPECIFICATION
+================================================================================
+Project:   ${projName}
+Clip:      Shot ${clipIndex} (Attempt ${attemptIndex})
+Duration:  ${job.durationSeconds}s | Mode: ${job.mode}
+Seed:      ${res.seed || 'random'}
+Timestamp: ${promptRecord.timestamp}
+
+--------------------------------------------------------------------------------
+1. USED REFERENCE IMAGES
+--------------------------------------------------------------------------------
+${refLines}
+
+--------------------------------------------------------------------------------
+2. INTEGRATED MULTIMODAL DESCRIPTION (Visuals, Camera & Spoken Voice)
+--------------------------------------------------------------------------------
+${job.prompt.integrated_multimodal_description || ''}
+
+--------------------------------------------------------------------------------
+3. OVERALL SOUNDSCAPE (Foley & Ambience)
+--------------------------------------------------------------------------------
+${job.prompt.overall_soundscape || 'N/A'}
+
+--------------------------------------------------------------------------------
+4. NON-DIEGETIC MUSIC (BGM)
+--------------------------------------------------------------------------------
+${job.prompt.non_diegetic_music || 'N/A'}
+================================================================================
+`;
+      fs.writeFileSync(path.join(attemptDir, 'prompt.txt'), promptText, 'utf8');
+    } catch (saveErr) {
+      console.error('Error saving prompt file:', saveErr);
+    }
+
     fs.writeFileSync(statusFile, JSON.stringify({
       status: 'done',
       ok: res.ok,
-      videoPath: res.localFiles?.find(f => f.endsWith('.mp4')) || res.localFiles?.[0],
+      videoPath: videoFile,
       duration: shot.durationSeconds,
       seed: res.seed,
       error: res.error,
