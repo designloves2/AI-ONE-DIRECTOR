@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment & local secrets
+.env
+.env.*
+!.env.example
+
+# Runtime / Output directories
+projects/
+output/
+temp/
+tmp/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sw?
+*.lock
+
+# Python
+__pycache__/
+*.pyc
