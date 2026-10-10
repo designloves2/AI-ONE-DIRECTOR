@@ -20,34 +20,47 @@ fs.writeFileSync(statusFile, JSON.stringify({ status: 'running', startTime: Date
 
 const attemptDir = getClipDir(projName, clipIndex, attemptIndex);
 
-const pDesc = typeof shot.scenePrompt === 'string'
-  ? shot.scenePrompt
-  : (shot.scenePrompt?.integrated_multimodal_description || shot.prompt?.integrated_multimodal_description || '');
+let promptObj = {};
+if (shot.prompt && typeof shot.prompt === 'object') {
+  promptObj = {
+    integrated_multimodal_description: shot.prompt.integrated_multimodal_description || '',
+    overall_soundscape: shot.prompt.overall_soundscape || 'Natural room ambience',
+    non_diegetic_music: shot.prompt.non_diegetic_music || 'N/A'
+  };
+} else if (shot.scenePrompt && typeof shot.scenePrompt === 'object') {
+  promptObj = {
+    integrated_multimodal_description: shot.scenePrompt.integrated_multimodal_description || '',
+    overall_soundscape: shot.scenePrompt.overall_soundscape || 'Natural room ambience',
+    non_diegetic_music: shot.scenePrompt.non_diegetic_music || 'N/A'
+  };
+} else {
+  promptObj = {
+    integrated_multimodal_description: typeof shot.scenePrompt === 'string' ? shot.scenePrompt : (shot.prompt || ''),
+    overall_soundscape: typeof shot.speech === 'string' ? shot.speech : 'Natural room ambience and foley',
+    non_diegetic_music: shot.music ? 'Energetic upbeat acoustic pop beat' : 'N/A'
+  };
+}
 
-const pSound = typeof shot.speech === 'string'
-  ? shot.speech
-  : (shot.scenePrompt?.overall_soundscape || shot.prompt?.overall_soundscape || 'Dynamic commercial soundscape');
+const resolvedRefImages = (shot.refImages || []).map(p => {
+  if (path.isAbsolute(p)) return p;
+  return path.resolve('projects', projName, p);
+});
 
-const pMusic = shot.music
-  ? (typeof shot.music === 'string' ? shot.music : (shot.scenePrompt?.non_diegetic_music || 'Energetic modern electronic rock beat'))
-  : 'N/A';
+const aspect = shot.aspect || (state.brief?.description?.includes('9:16') ? '9:16 Portrait' : '16:9 Landscape');
 
 const job = {
   mode: 'ref2va',
-  durationSeconds: shot.durationSeconds || 10,
-  prompt: {
-    integrated_multimodal_description: pDesc,
-    overall_soundscape: pSound,
-    non_diegetic_music: pMusic
-  },
-  refImages: shot.refImages || [],
+  durationSeconds: shot.durationSeconds || 6,
+  aspect,
+  prompt: promptObj,
+  refImages: resolvedRefImages,
   hiresFinish: true,
   hiresStartMp: 0.5,
   hiresFinalMp: 1.6,
   turboMode: 'pdd'
 };
 
-console.log(`[RENDER START] Project: ${projName}, Clip: ${clipIndex}, Attempt: ${attemptIndex}`);
+console.log(`[RENDER START] Project: ${projName}, Clip: ${clipIndex}, Attempt: ${attemptIndex}, Aspect: ${aspect}`);
 
 generateH3(job, { outDir: attemptDir })
   .then(res => {
@@ -55,7 +68,7 @@ generateH3(job, { outDir: attemptDir })
     const videoFile = res.localFiles?.find(f => f.endsWith('.mp4')) || res.localFiles?.[0];
 
     // Reference files mapping
-    const refList = (shot.refImages || []).map((refPath, idx) => ({
+    const refList = resolvedRefImages.map((refPath, idx) => ({
       index: idx + 1,
       label: `<Picture ${idx + 1}>`,
       filename: path.basename(refPath),
@@ -68,6 +81,7 @@ generateH3(job, { outDir: attemptDir })
       attemptIndex,
       mode: job.mode,
       durationSeconds: job.durationSeconds,
+      aspect,
       references: refList,
       prompt: job.prompt,
       seed: res.seed,
@@ -87,8 +101,8 @@ CLIP PROMPT & REFERENCE SPECIFICATION
 ================================================================================
 Project:   ${projName}
 Clip:      Shot ${clipIndex} (Attempt ${attemptIndex})
-Duration:  ${job.durationSeconds}s | Mode: ${job.mode}
-Seed:      ${res.seed || 'random'}
+Duration:  ${job.durationSeconds}s | Mode: ${job.mode} | Aspect: ${aspect}
+Seed:      ${res.seed ?? 'random'}
 Timestamp: ${promptRecord.timestamp}
 
 --------------------------------------------------------------------------------
