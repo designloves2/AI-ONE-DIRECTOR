@@ -1,0 +1,23 @@
+{
+  "name": "ai-one-director",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Autonomous AI Video Director MCP Server and Pipeline",
+  "main": "src/server.mjs",
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "ai-director",
+    "comfyui",
+    "minimax-h3",
+    "krea2",
+    "qwen21"
+  ],
+  "author": "designloves2",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1"
+  }
+}

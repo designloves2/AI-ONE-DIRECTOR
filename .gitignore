@@ -10,6 +10,7 @@ yarn-debug.log*
 pnpm-debug.log*
 
 # Environment & local secrets
+comfy.json
 .env
 .env.*
 !.env.example

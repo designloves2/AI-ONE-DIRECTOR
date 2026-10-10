@@ -1,0 +1,8 @@
+{
+  "baseUrl": "http://127.0.0.1:8188",
+  "headers": {
+    "CF-Access-Client-Id": "your-cf-access-client-id",
+    "CF-Access-Client-Secret": "your-cf-access-client-secret"
+  },
+  "timeoutMs": 1800000
+}
