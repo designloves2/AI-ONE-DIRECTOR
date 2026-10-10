@@ -3,82 +3,95 @@
 **Autonomous AI Video Director MCP Server & Production Pipeline**
 
 AI ONE DIRECTOR transforms a high-level creative brief into a fully finished, high-resolution commercial or narrative video autonomously:
-`Brief -> Scenario & Shot List -> Reference Images -> Video Generation (7+1 Turbo) -> One-Look Review -> Retries / Adoption -> Stitching & Concat -> Korean Typography Overlay -> Final Report`.
+`Brief -> Scenario & Dynamic Shot Planning -> Reference Asset Pool (Krea2 Default) -> Video Generation (H3 7+1 Turbo) -> One-Look Review & Face Auto-Refine -> Retries / Adoption -> Stitching & Concat -> Korean Typography Overlay -> Final Report`.
 
 Built for local GPU execution with persistent remote MCP server access over Cloudflare tunnels, strict token economy, and zero user approval bottlenecks during production.
 
 ---
 
-## Key Highlights
+## 📋 Prerequisites & Requirements (사용 조건 및 필수 환경)
+
+AI ONE DIRECTOR is an autonomous orchestration layer that communicates with an active **ComfyUI backend engine**. To use all features, the following software, custom node packs, and dependencies must be configured:
+
+### 1. ComfyUI Server & Core Custom Nodes
+* **ComfyUI Server**: Running at `http://127.0.0.1:8188` (or accessible via Cloudflare tunnel `https://comfy.tjtj.cloud`).
+* **[`ComfyUI-TJ_NODE_STUDIO_ONE`](https://github.com/designloves2/ComfyUI-TJ_NODE_STUDIO_ONE)** (**MANDATORY**):
+  - Provides the underlying all-in-one studio graph builders and configuration REST endpoints (`/minimax_h3_one/config`, `/krea2_one/config`, `/qwenimage21_one/config`, etc.).
+* **[`ComfyUI-TJ_NODE`](https://github.com/designloves2/ComfyUI-TJ_NODE)**:
+  - Wireless routing architecture, memory optimizers, and shared asset library endpoints.
+* **Optional Companion Web UI**:
+  - **[`AI-ONE-STUDIO`](https://github.com/designloves2/AI-ONE-STUDIO)**: Standalone web studio for manual interactive generation, asset inspection, and prompt tuning.
+
+---
+
+### 2. Model-Specific Custom Node Dependencies
+
+| Feature / Model | Required ComfyUI Custom Nodes | Purpose |
+|---|---|---|
+| 🎬 **MiniMax H3 Video** | • `ComfyUI-MiniMaxH3_LatentUpscaler`<br>• `ComfyUI-sol-attn` or `ComfyUI-SolAttn_triton`<br>• `minimax-h3-firstblockcache`<br>• `ComfyUI-H3-NativeAudioLock`<br>• `ComfyUI-FlashVSR_Ultra_Fast`<br>• `H3-Optimizations` | 7+1 Latent Upscale (0.5MP -> 1.6MP), Fused Attention acceleration, FirstBlockCache, and Native Audio Locking. |
+| 👤 **H3 Face Refine** | • `ComfyUI-H3-FaceRefine`<br>• `face_yolov8m.pt` (in `models/yolo` or `models/detection`) | Automated facial tracking, 768x768 cropping, latent re-rendering, and seamless stitching for small/distant faces. |
+| 🖼 **Krea 2 (Default)** | • `comfyui-krea2edit`<br>• `comfyui-krea2-controlnet`<br>• `ComfyUI-Krea2T-Enhancer` | Primary default engine for Reference Asset Pool, T2I, I2I, and Identity generation. |
+| 🖼 **Qwen Image 2.1** | • `comfyui-qwenmultiangle`<br>• `ComfyUI-QwenVL`<br>• `ComfyUI-SAM3DBody` | Multi-angle editing, Ref2Image, and 2-stage character pose transfer (SAM3D Body). |
+| 🖼 **Flux.2 Klein** | • `ComfyUI-Flux2Klein-Enhancer`<br>• `ComfyUI-nunchaku` | 4-step/base Klein T2I, I2I, inpaint, outpaint, and faceswap. |
+| 🖼 **Z-Image Turbo** | • `ComfyUI-Impact-Pack`<br>• `ComfyUI-KJNodes` | Fast 8-step SDXL-Turbo / AuraFlow generation. |
+| 🎵 **MusicMaker** | • `JK-AceStep-Nodes`<br>• `ComfyUI-YuE2` | Ace-Step 1.5 and MiniMax Music 3 / YuE2 soundtrack generation. |
+| 🔍 **Upscale & RTX** | • `seedvr2_videoupscaler`<br>• `comfyui_nvidia_rtx_nodes` | SeedVR2 still upscale and NVIDIA RTX Video Super Resolution (VSR) / Deblur. |
+| 🛠 **Media Utilities** | • `comfyui-videohelpersuite` (VHS)<br>• `rgthree-comfy`<br>• `comfyui-kjnodes` | Video loading, batching, combining, and latent manipulation. |
+
+---
+
+### 3. System & Binary Dependencies
+* **Operating System**: Windows 10/11 (or Linux) with an NVIDIA GPU (**16GB+ VRAM** recommended for MiniMax H3 7+1 hi-res rendering).
+* **Node.js**: **v20+** (Required to run the AI ONE DIRECTOR MCP server and zero-dependency headless modules).
+* **FFmpeg & FFprobe**: Must be installed and registered in system `PATH` (used for frame grid extraction, numeric quality inspection, lossless concat, and Korean typography overlays).
+* **Python & Whisper**: Python 3.10+ environment (such as `ComfyUI-Easy-Install\python_embeded`) with `openai-whisper` installed for STT dialogue/script verification.
+
+---
+
+### 4. Required Model Weights
+Ensure the corresponding model checkpoints are downloaded to your ComfyUI `models/` directory:
+* **MiniMax H3**: UNet (`MinimaxH3/...`), VAEs (`minimax_h3_video_vae_int8_convrot.safetensors`, `minimax_h3_audio_vae_fp32.safetensors`), Text Encoder (`qwen3vl_32b_heretic_minimax_h3_nvfp4.safetensors`), Turbo LoRA (`MiniMax-H3-*-Acc-8Step*.safetensors`), Latent Upscaler (`minimax_h3_latent_upscaler_3d_bf16.safetensors`).
+* **Krea 2**: UNet (`Krea2/...`), Text Encoder (`qwen_3vl_4b_bf16.safetensors`), VAE (`qwen_image_vae.safetensors`).
+* **Qwen Image 2.1**: Model (`QwenImage21/...`), Text Encoder (`qwen3vl_8b_int8_convrot.safetensors`), VAE (`qwen_image_2.1_vae_bf16.safetensors`).
+* **Face Detection**: `face_yolov8m.pt` (in `models/yolo` or `models/detection`).
+
+---
+
+## 🚀 Key Highlights & Architecture
 
 - **Token Economy (Top Priority)**:
   - **One-look review**: Visual verdict (`PASS`/`FAIL`) + single-line failure reason.
   - **Single lightweight grid image**: FFmpeg extracts 4-6 representative frames into one 2x2 grid image per attempt, eliminating excessive multimodal token costs.
   - **Cheap numeric checks first**: ffprobe & ffmpeg inspect duration, resolution, freeze, and blackout before vision models ever view frames.
   - **State persisted in files**: Everything tracked in `project.json` and `clips/clipNN/review.json`.
-- **Production Standard**:
-  - **MiniMax H3 7+1 Default**: 7 turbo steps at 0.5 MP, latent upscale, 1 refinement step at 1.6 MP (1696x960 16:9).
-  - **Korean Typography**: Overlaid via FFmpeg using system font (`malgun.ttf`). Video diffusion models are never tasked with drawing Hangul text.
-  - **Product Match Guarantee**: Side-by-side reference verification with instant-fail enforcement.
-  - **Automatic Adoption**: Up to 3 attempts per shot; adopts best scoring attempt if retry limit is reached.
-- **Unified MCP Server**:
-  - Supports both **Streamable HTTP SSE** (`http://localhost:3210/sse`) and **Stdio** transports.
-  - Bearer token authentication, path locking, and single-GPU concurrency mutex.
+- **Reference Asset Pool (Krea2 Default)**:
+  - Pre-generates an asset pool (3~6 images: product angles, character expressions, props) with Krea2 up front.
+  - Selectively maps 1~3 relevant references per shot, ensuring cross-shot consistency without clutter.
+- **Dynamic Pacing (Never 10s x 3)**:
+  - Banned uniform division. Uses beat-driven variable shot lengths: Hook (3~5s), Macro Sizzle (6~9s), Reaction (3~5s), Lifestyle (5~8s), Hero Ending (4~6s).
+- **Small Face Auto-Refine Protocol**:
+  - Detects small face pixel smudging in wide/full shots and automatically restores faces with `enhance_face_refine` (768x768 crop & stitch) without regenerating the whole clip.
+- **Natural Spoken Korean & Rich Voice Profiling**:
+  - Replaces stiff brochure copy with living conversational dialogue (`<d>[Korean]...</d>`) and multi-dimensional voice actor descriptions `(S1)`.
+- **Korean Typography**: Overlaid via FFmpeg using system font (`malgun.ttf`). Video diffusion models are never tasked with drawing Hangul text.
 
 ---
 
-## System Architecture
-
-```
-C:\AI\AI_One_Director/
-├── comfy.json                  # ComfyUI backend endpoint (http://127.0.0.1:8188)
-├── start-director.bat          # Auto-restarting Windows launcher
-├── start-director-background.vbs # Silent background launcher
-├── headless/                   # Zero-dependency generation modules (copied from AI-ONE-STUDIO)
-│   ├── h3-headless/            # MiniMax H3 (ref2va, fl2va, l2va, t2va, onetake)
-│   ├── krea2-headless/         # Krea2 (t2i, i2i, identity)
-│   ├── qwen21-headless/        # Qwen Image 2.1 (t2i, i2i, ref2i, edit, pose)
-│   ├── zimage-headless/        # Z-Image Turbo
-│   ├── klein-headless/         # Flux2 Klein
-│   ├── video-rtx-headless/     # RTX Video Super Resolution / Deblur
-│   ├── music-headless/         # MusicMaker (AceStep / MiniMax)
-│   └── upscale-headless/       # SeedVR2 upscale
-├── src/
-│   ├── server.mjs              # MCP Server (SSE & Stdio, CORS, Token Auth)
-│   ├── tools.mjs               # 18 MCP tool definitions with Zod schemas
-│   ├── resources.mjs           # MCP resources for director rules and rubrics
-│   ├── media.mjs               # FFmpeg probing, grid extraction, concat, text overlay
-│   ├── stt.mjs                 # Whisper STT speech verification wrapper
-│   ├── whisper_transcribe.py   # Python Whisper transcription script
-│   ├── generators.mjs          # GPU-locked wrappers for headless modules
-│   ├── projects.mjs            # Project folder structure & state management
-│   └── security.mjs            # Token validation & path sanitization
-├── skills/
-│   ├── director-core.md        # Core director rules & autonomous workflow
-│   ├── rubric.md               # 10-point scoring rubric & instant fail rules
-│   └── genres/
-│       ├── ad.md               # Commercial / product ad profile
-│       ├── short-drama.md      # Narrative drama profile
-│       └── vlog.md             # 9:16 short-form & rhythm profile
-└── projects/                   # Generated projects and artifacts
-```
-
----
-
-## Exposed MCP Tools
+## 🛠 Exposed MCP Tools (19 Tools)
 
 | Tool | Category | Description |
 |---|---|---|
 | `project_init` | Lifecycle | Initialize project directory with brief and initial state |
 | `project_status` | Lifecycle | Query current project stage, shot progress, and clip verdicts |
 | `project_save_scenario` | Pre-prod | Save shot list table (purpose, duration, prompts, refs) |
-| `generate_image_krea2` | Image Gen | Generate reference or concept images with Krea2 |
+| `generate_image_krea2` | Image Gen | Generate reference or concept images with Krea2 (Default Engine) |
 | `generate_image_qwen21` | Image Gen | Generate reference images with Qwen Image 2.1 |
 | `generate_image_zimage` | Image Gen | Fast generation via Z-Image Turbo |
 | `generate_image_klein` | Image Gen | Flux2 Klein generation, inpaint, or faceswap |
 | `generate_image_upscale` | Image Gen | Upscale still images via SeedVR2 |
 | `generate_video_h3` | Video Gen | MiniMax H3 video clip generation (7+1 1.6MP default) |
 | `generate_video_rtx` | Video Post | Upscale or deblur video clips using NVIDIA RTX VSR |
+| `enhance_face_refine` | Video Post | Track and restore small/smudged faces via H3 Face Refine (768x768 crop & stitch) |
 | `generate_music` | Audio Gen | Generate background music or songs (AceStep / MiniMax) |
 | `media_quality_check` | Media Tool | Cheap numeric quality filter (resolution, freeze, blackout) |
 | `media_extract_grid` | Media Tool | Extract representative frames into ONE lightweight 2x2 grid |
@@ -90,27 +103,25 @@ C:\AI\AI_One_Director/
 
 ---
 
-## MCP Resources
+## 📚 MCP Resources
 
-Clients can read the operational rules and profiles directly:
-- `director://skills/core`: Core director rules and token economy guidelines
-- `director://skills/rubric`: Complete 10-point scoring rubric and instant-fail rules
-- `director://skills/genres/ad`: Commercial ad structure and product fidelity rules
+Clients (Claude Desktop, Claude Code, Cursor, Codex) can read the operational rules and prompt guides directly:
+- `director://skills/core`: Core director rules, token economy, and production workflow
+- `director://skills/prompts`: Canonical prompt rules summary (H3 3-field schema & `<d>[Korean]...</d>` markup)
+- `director://skills/prompts/krea2`: Official Krea 2 8-layer natural language prompt guide
+- `director://skills/prompts/h3-base`: Official MiniMax H3 Video Prompt Guide (T2VA / I2VA / FL2VA / L2VA)
+- `director://skills/prompts/h3-ref`: Official MiniMax H3 Ref2VA 6-section guide
+- `director://skills/prompts/qwen21`: Official Qwen Image 2.1 prompt guide
+- `director://skills/rubric`: Complete 10-point scoring rubric, instant fail rules, and Face Refine protocol
+- `director://skills/genres/ad`: Commercial ad structure, asset pool mapping, and product fidelity rules
 - `director://skills/genres/drama`: Narrative drama structure and character consistency rules
-- `director://skills/genres/vlog`: 9:16 short-form rhythm and typography rules
+- `director://skills/genres/vlog`: 9:16 short-form rhythm, spoken dialogue, and typography rules
 
 ---
 
-## Quick Start
+## 🏃 Quick Start
 
-### 1. Requirements
-- Windows 10/11 with NVIDIA GPU (16GB+ VRAM recommended)
-- Node.js 20+
-- FFmpeg in system PATH
-- ComfyUI running at `http://127.0.0.1:8188` (with `ComfyUI-TJ_NODE_STUDIO_ONE` nodes)
-- Python embedded environment (`C:\AI\ComfyUI-Easy-Install\python_embeded`) with `openai-whisper`
-
-### 2. Running the Server
+### 1. Running the Server Locally
 ```bash
 # Start MCP server directly
 node src/server.mjs
@@ -123,12 +134,18 @@ By default, the server listens on `http://0.0.0.0:3210`.
 SSE endpoint: `http://localhost:3210/sse`  
 Health check: `http://localhost:3210/health`
 
----
-
-## Verified End-to-End Test
-
-The complete pipeline was verified with a real production run (`projects/energy_drink_ad`):
-1. **Reference Generation**: Krea2 generated neon energy drink can reference (`K2_00422_.png`) in 43.7s.
-2. **Shot 1 Generation**: H3 7+1 (0.5MP -> 1.6MP, 1696x960, 5.17s) rendered in 214s -> Numeric quality PASS -> Visual review 10/10 PASS.
-3. **Shot 2 Generation**: H3 7+1 hero pullback (1696x960, 5.17s) rendered in 207s -> Numeric quality PASS -> Visual review 10/10 PASS.
-4. **Assembly**: Concat into 10.37s video + 2-stage Korean typography overlay ("잠든 에너지를 깨우다", "한계를 뛰어넘는 짜릿함") -> Final commercial video delivered.
+### 2. Connecting Remote Agents (Claude Desktop / Cursor / Codex)
+Add to your client configuration (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "ai-one-director": {
+      "url": "https://director.tjtj.cloud/sse",
+      "headers": {
+        "Authorization": "Bearer aione-director-secret-token-2026"
+      }
+    }
+  }
+}
+```
+*(If Cloudflare Access Zero Trust is enabled on the tunnel, include `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers).*
