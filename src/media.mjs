@@ -173,8 +173,19 @@ export async function extractFrameGrid(videoPath, outGridPath, count = 4, cols =
     } else if (count === 6 && cols === 3) {
       filterGraph = '[0:v][1:v][2:v]hstack=inputs=3[top];[3:v][4:v][5:v]hstack=inputs=3[bot];[top][bot]vstack=inputs=2,scale=1440:810[out]';
     } else {
-      // General tile filter
-      filterGraph = `tile=${cols}x${Math.ceil(count / cols)}[out]`;
+      // General grid: scale every frame to one width (keeps aspect, so portrait works), hstack rows, vstack rows
+      const w = Math.floor(1600 / cols / 2) * 2;
+      const rows = Math.ceil(count / cols);
+      const parts = [];
+      for (let i = 0; i < count; i++) parts.push(`[${i}:v]scale=${w}:-2[s${i}]`);
+      const rowLabels = [];
+      for (let r = 0; r < rows; r++) {
+        const idx = Array.from({ length: cols }, (_, c) => Math.min(r * cols + c, count - 1));
+        parts.push(`${idx.map((i) => `[s${i}]`).join('')}hstack=inputs=${cols}[r${r}]`);
+        rowLabels.push(`[r${r}]`);
+      }
+      parts.push(rows > 1 ? `${rowLabels.join('')}vstack=inputs=${rows}[out]` : '[r0]null[out]');
+      filterGraph = parts.join(';');
     }
 
     const tileArgs = [

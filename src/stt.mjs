@@ -52,7 +52,10 @@ export async function transcribeAudio(audioOrVideoPath, modelName = 'base') {
   const args = [scriptPath, audioOrVideoPath, modelName];
 
   try {
-    const { stdout } = await execFileAsync(config.pythonEmbeded, args);
+    const { stdout } = await execFileAsync(config.pythonEmbeded, args, {
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
+      maxBuffer: 16 * 1024 * 1024
+    });
     const result = JSON.parse(stdout.trim());
     return result;
   } catch (err) {
