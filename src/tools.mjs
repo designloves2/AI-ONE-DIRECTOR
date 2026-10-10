@@ -16,6 +16,7 @@ import {
   generateKrea2,
   generateQwen21,
   generateH3,
+  generateFaceRefine,
   generateKlein,
   generateZImage,
   generateMusic,
@@ -93,10 +94,11 @@ export function registerTools(server) {
         purpose: z.string(),
         durationSeconds: z.number().min(3).max(10),
         durationReason: z.string(),
-        scenePrompt: z.string(),
+        scenePrompt: z.union([z.string(), z.record(z.any())]),
         refImages: z.array(z.string()).optional(),
         speech: z.string().optional(),
-        music: z.boolean().optional()
+        music: z.union([z.boolean(), z.string()]).optional(),
+        aspect: z.string().optional()
       }))
     },
     async ({ projectName, shots }) => {
@@ -108,7 +110,7 @@ export function registerTools(server) {
   // 4. generate_image_krea2
   server.tool(
     'generate_image_krea2',
-    'Generate reference image using Krea2 model',
+    'Generate reference image using Krea2 model (Primary Default Engine)',
     {
       projectName: z.string(),
       prompt: z.string(),
@@ -369,7 +371,7 @@ CLIP PROMPT & REFERENCE SPECIFICATION
 Project:   ${projectName}
 Clip:      Shot ${clipIndex} (Attempt ${attemptIndex})
 Duration:  ${durationSeconds}s | Mode: ${mode} | Aspect: ${aspect}
-Seed:      ${res.seed || 'random'}
+Seed:      ${res.seed ?? 'random'}
 Timestamp: ${promptRecord.timestamp}
 
 --------------------------------------------------------------------------------
@@ -380,7 +382,7 @@ ${refLines}
 --------------------------------------------------------------------------------
 2. INTEGRATED MULTIMODAL DESCRIPTION (Visuals, Camera & Spoken Voice)
 --------------------------------------------------------------------------------
-${pObj.integrated_multimodal_description || pObj.prompt || ''}
+${pObj.integrated_multimodal_description || ''}
 
 --------------------------------------------------------------------------------
 3. OVERALL SOUNDSCAPE (Foley & Ambience)
@@ -439,7 +441,70 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 11. generate_music
+  // 11. enhance_face_refine
+  server.tool(
+    'enhance_face_refine',
+    'Restore smudged/small face pixels in a video clip using H3 Face Refine (crops face, refines with H3 at 768x768, stitches back seamlessly)',
+    {
+      projectName: z.string().describe('Project name'),
+      videoPath: z.string().describe('Path to source video clip needing face refinement'),
+      clipIndex: z.number().describe('Clip/Shot index'),
+      attemptIndex: z.number().default(1).describe('Attempt index'),
+      prompt: z.string().optional().describe('Text prompt describing desired clear facial features and skin texture'),
+      refImages: z.array(z.string()).optional().describe('Character reference images from asset pool'),
+      denoise: z.number().default(0.40).describe('Refine denoise strength (default 0.40)'),
+      faceDetector: z.string().default('face_yolov8m.pt').describe('Face detector model'),
+      dryRun: z.boolean().default(false)
+    },
+    async ({
+      projectName,
+      videoPath,
+      clipIndex,
+      attemptIndex,
+      prompt,
+      refImages,
+      denoise,
+      faceDetector,
+      dryRun
+    }) => {
+      const cleanVideo = sanitizePath(videoPath, projectName);
+      const attemptDir = getClipDir(projectName, clipIndex, attemptIndex);
+
+      const job = {
+        sourceFile: cleanVideo,
+        faceDetector,
+        denoise,
+        prompt: prompt || 'Natural detailed facial texture, clear expressive eyes, nose, and lips, photorealistic human skin',
+        ...(refImages ? { refImages: refImages.map(p => sanitizePath(p, projectName)) } : {})
+      };
+
+      const res = await generateFaceRefine(job, { dryRun, outDir: attemptDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      const refinedVideo = res.localFiles?.find(f => f.endsWith('.mp4')) || res.localFiles?.[0] || 'dry_run_ok';
+      let newGridPath = null;
+      if (!dryRun && refinedVideo !== 'dry_run_ok') {
+        newGridPath = path.join(attemptDir, 'grid_facerefined.jpg');
+        try {
+          await extractFrameGrid(refinedVideo, newGridPath, 4, 2);
+        } catch (_) {}
+      }
+
+      return formatToolResponse({
+        ok: true,
+        refinedVideoPath: refinedVideo,
+        newGridPath,
+        originalVideoPath: cleanVideo,
+        clipIndex,
+        attemptIndex,
+        dryRun
+      });
+    }
+  );
+
+  // 12. generate_music
   server.tool(
     'generate_music',
     'Generate music or instrumental soundtrack via MusicMaker (acestep / minimax)',
@@ -471,7 +536,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 12. media_quality_check
+  // 13. media_quality_check
   server.tool(
     'media_quality_check',
     'Cheap numeric check for resolution, duration, freeze, and blackouts',
@@ -494,7 +559,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 13. media_extract_grid
+  // 14. media_extract_grid
   server.tool(
     'media_extract_grid',
     'Extract representative frames and tile into ONE lightweight grid image for visual review',
@@ -521,7 +586,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 14. stt_verify
+  // 15. stt_verify
   server.tool(
     'stt_verify',
     'Transcribe video audio using Whisper and verify script adherence',
@@ -543,7 +608,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 15. record_review_verdict
+  // 16. record_review_verdict
   server.tool(
     'record_review_verdict',
     'Record one-look review verdict (PASS/FAIL/ADOPT) + one-line reason',
@@ -593,7 +658,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 16. media_concat_clips
+  // 17. media_concat_clips
   server.tool(
     'media_concat_clips',
     'Stitch passed video clips together into a single final video',
@@ -616,7 +681,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 17. media_text_overlay
+  // 18. media_text_overlay
   server.tool(
     'media_text_overlay',
     'Overlay Korean subtitles/typography using FFmpeg',
@@ -648,7 +713,7 @@ ${pObj.non_diegetic_music || 'N/A'}
     }
   );
 
-  // 18. project_save_report
+  // 19. project_save_report
   server.tool(
     'project_save_report',
     'Save final markdown report and mark project completed',

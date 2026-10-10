@@ -39,6 +39,10 @@ Every generated file is kept separately. Genres: ads, short drama, short-form / 
 - Retries: max 3 per clip. After 3 fails, ADOPT the best-scoring attempt, keep going, flag it in the final report with the
   reason. Never stop to ask. Only stop on the global budget cap (total attempts / time); then still write the report.
 - Every verdict stored in `clips/clipNN/review.json`: scores, evidence (which frame), frames used.
+- **Small Face Clarity & Face Refine Auto-Recovery**:
+  - Close-ups are bypassed (already sharp).
+  - For full/wide/medium-long shots where character face is small: if facial pixels show smudging/blurring during grid review, DO NOT regenerate the whole clip.
+  - Call `enhance_face_refine` (H3 Face Refine: 768x768 crop, character ref re-render, seamless stitch) to restore the face cleanly onto the clip (`video_facerefined.mp4`), then proceed to pass.
 - Be honest in the report about what frame-based review cannot verify (fine motion, lip sync).
 
 ## Text / typography

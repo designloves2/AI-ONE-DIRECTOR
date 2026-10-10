@@ -67,6 +67,23 @@ export async function generateH3(job, opts = {}) {
 }
 
 /**
+ * Restore smudged/small faces via H3 Face Refine
+ */
+export async function generateFaceRefine(job, opts = {}) {
+  const comfy = getComfyConfig();
+  const fullJob = {
+    mode: 'facerefine',
+    faceDetector: job.faceDetector || 'face_yolov8m.pt',
+    frDenoise: job.denoise !== undefined ? job.denoise : (job.frDenoise ?? 0.40),
+    ...job
+  };
+
+  return gpuLock.runExclusive(async () => {
+    return await runH3(fullJob, comfy, opts);
+  });
+}
+
+/**
  * Generate image via Z-Image
  */
 export async function generateZImage(job, opts = {}) {

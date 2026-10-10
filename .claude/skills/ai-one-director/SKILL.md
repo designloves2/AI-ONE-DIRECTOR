@@ -31,10 +31,16 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
      - `non_diegetic_music`: background music instrumentation, tempo, and rhythm.
    - Selectively inject ONLY the relevant references from the pool for that specific shot (e.g. [1,3] for shot 1; [1,2] for shot 2; [1,4,5] for shot 3).
 -> `media_quality_check` -> `stt_verify` (if speech) -> `media_extract_grid` (ONE grid)
+-> **Face Clarity Check & Auto-Refine**:
+   - Close-ups are bypassed.
+   - If a full/wide shot shows small face pixel smudging: call `enhance_face_refine` to track, crop (768x768), and re-render the face with H3, stitching it back seamlessly.
 -> score -> `record_review_verdict` -> `media_concat_clips` -> `media_text_overlay` -> optional `generate_music`
 -> `project_save_report`.
 
 ## Hard rules
+- **SMALL FACE PIXEL RECOVERY (`enhance_face_refine`)**:
+  - Close-ups do not need face refine.
+  - For wide/full shots where face size is small: if face pixels are smudged or blurry, DO NOT regenerate the entire video clip. Call `enhance_face_refine` to track, crop, and re-render the face with H3 at 768x768 canvas, stitching it back seamlessly over the clip (`video_facerefined.mp4`). This saves immense GPU time while restoring crisp, natural facial details.
 - **NATURAL SPOKEN DIALOGUE & RICH VOICE PROFILING**:
   - **No Stiff Brochure Language**: Never write textbook/brochure copy (`"특별한 한 끼를 원할 땐?"`). Write authentic, living spoken Korean with emotional exclamations (`"와... 대박!"`, `"음~! 육즙 미쳤다!"`, `"아... 영혼까지 털렸다..."`), breath pauses, and natural cadences.
   - **Multi-Dimensional Voice Actor Profiling**: Always describe the speaker before `(S1)` with [Age/Gender] + [Emotional State] + [Timbre (raspy, breathy, bright, deep baritone)] + [Cadence & Breath (fast, smiling tone, weary sighing)], eliminating mechanical robotic synthesis.
