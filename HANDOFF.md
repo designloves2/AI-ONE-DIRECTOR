@@ -127,6 +127,7 @@ generated speech vs a separate TTS — decide after seeing what is installed; pi
 Estimate given to the owner: ~10-15 h of work total; MVP ~5-7 h; GPU time in step 4 is the main uncertainty.
 
 ## Working rules from the owner
+- When adding or extending MCP tools/features, ALWAYS check the headless folders in `C:\AI\AI_One_Studio` (`*-headless`) first and reuse the verified implementation.
 - Don't run tools or build while the owner is still explaining; start on an explicit "start". Sentences about how the
   finished system should behave (autonomous, no approvals) are design requirements, not a go signal.
 - The shared ComfyUI server config (e.g. `/minimax_h3_one/config`) is the owner's real data: read first, change nothing
