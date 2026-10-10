@@ -108,7 +108,8 @@ Each `index.mjs` exports `generate(job, comfyConfig, opts)` -> `{ok, outputs[], 
 `comfy.json`: `{ baseUrl, headers?, timeoutMs? }`; local: `http://127.0.0.1:8188`.
 NOT covered by headless: Anima, SDXL, Qwen Image Edit 2511 (editing in the studio web app only). The web app source
 `C:\AI\AI_One_Studio\src\tools\*` is the reference if one of them is needed later. Do not edit the studio repo or the node
-pack (`C:\AI\ComfyUI-Easy-Install\ComfyUI\custom_nodes\ComfyUI-TJ_NODE_STUDIO_ONE`) from here; other sessions own them.
+packs (`C:\AI\ComfyUI-Easy-Install\ComfyUI\custom_nodes\ComfyUI-TJ_NODE_STUDIO_ONE` and its foundational base `ComfyUI-TJ_NODE`) from here; other sessions own them.
+Note: `ComfyUI-TJ_NODE` is the foundational base node — `ComfyUI-TJ_NODE_STUDIO_ONE` cannot function without it.
 Reuse headless code by copying into this project (note the source commit), don't rewrite it.
 
 ## Not yet checked (do in step 1, check only — install nothing without the owner's say-so)

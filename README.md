@@ -15,10 +15,11 @@ AI ONE DIRECTOR is an autonomous orchestration layer that communicates with an a
 
 ### 1. ComfyUI Server & Core Custom Nodes
 * **ComfyUI Server**: Running at `http://127.0.0.1:8188` (or accessible via Cloudflare tunnel `https://comfy.tjtj.cloud`).
-* **[`ComfyUI-TJ_NODE_STUDIO_ONE`](https://github.com/designloves2/ComfyUI-TJ_NODE_STUDIO_ONE)** (**MANDATORY**):
-  - Provides the underlying all-in-one studio graph builders and configuration REST endpoints (`/minimax_h3_one/config`, `/krea2_one/config`, `/qwenimage21_one/config`, etc.).
-* **[`ComfyUI-TJ_NODE`](https://github.com/designloves2/ComfyUI-TJ_NODE)**:
-  - Wireless routing architecture, memory optimizers, and shared asset library endpoints.
+* **[`ComfyUI-TJ_NODE`](https://github.com/designloves2/ComfyUI-TJ_NODE)** (**FOUNDATIONAL BASE NODE / 필수 기반 베이스 노드**):
+  - **The fundamental base node for the entire ecosystem.** Provides the core wireless routing architecture, memory optimization engines, base utilities, and shared reference asset library (`/tj_node/reflib`).
+  - ⚠️ **`ComfyUI-TJ_NODE` must be installed first — `ComfyUI-TJ_NODE_STUDIO_ONE` directly depends on it and cannot function without it.**
+* **[`ComfyUI-TJ_NODE_STUDIO_ONE`](https://github.com/designloves2/ComfyUI-TJ_NODE_STUDIO_ONE)** (**MANDATORY ALL-IN-ONE STUDIO NODE**):
+  - Built on top of `ComfyUI-TJ_NODE`. Provides the underlying all-in-one studio graph builders and configuration REST endpoints (`/minimax_h3_one/config`, `/krea2_one/config`, `/qwenimage21_one/config`, etc.).
 * **Optional Companion Web UI**:
   - **[`AI-ONE-STUDIO`](https://github.com/designloves2/AI-ONE-STUDIO)**: Standalone web studio for manual interactive generation, asset inspection, and prompt tuning.
 
