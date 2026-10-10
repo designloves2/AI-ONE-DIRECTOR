@@ -14,12 +14,19 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 3. If the `ai-one-director` tools are missing, say so and stop (do not improvise with other tools).
 
 ## Flow (details live in the core resource)
-`project_init` -> scenario/shot list (`project_save_scenario`) -> reference images (Qwen 2.1 / Krea2; owner's images as-is)
--> per shot: `generate_video_h3` -> `media_quality_check` -> `stt_verify` (if speech) -> `media_extract_grid` (ONE grid)
+`project_init` -> scenario/shot list (`project_save_scenario`)
+-> **Mandatory Reference Assets Phase (Krea2 Default)**:
+   - Generate ALL required reference images with **Krea2 (`generate_image_krea2`)**.
+   - Do NOT stop at 1 product image. If an actor/customer appears (e.g. eating, smiling, reacting), **MUST generate a realistic character reference with Krea2** before rendering!
+   - If props/environment matter, generate them as well.
+-> per shot: `generate_video_h3` (inject `<Picture 1>` product + `<Picture 2>` character when both appear)
+-> `media_quality_check` -> `stt_verify` (if speech) -> `media_extract_grid` (ONE grid)
 -> score -> `record_review_verdict` -> `media_concat_clips` -> `media_text_overlay` -> optional `generate_music`
 -> `project_save_report`.
 
 ## Hard rules
+- **ALL References Generated (Krea2 Default)**: Never generate only 1 generic product reference if human characters or specific environments appear. Generate character references with Krea2 so human skin/expressions look real and natural, not generic plastic AI faces.
+- **Multi-Reference Injection**: When a shot includes both a product and a character, inject BOTH (`refImages: [refProduct, refCharacter]`) and label them `<Picture 1>` and `<Picture 2>` in the prompt.
 - Shots come from the scenario, never from slicing total length. 5-10 s each, one line "why this length" per shot.
 - Review is one look, one verdict: PASS/FAIL per item + one-line fail reason. Never re-review a passed clip.
 - Numbers first (ffprobe/STT). Numeric fail -> regenerate without looking.
@@ -27,7 +34,6 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 - Never let the video model draw Korean text/subtitles/ad copy; overlay with `media_text_overlay`.
 - Product shape + color + logo must match the reference (instant fail otherwise).
 - Keep tool results small; state lives in `project.json` / `clips/clipNN/review.json`, not in chat.
-- Use sub-agents per clip when available: mechanical steps on a light model; review by a separate Opus agent.
 - Long jobs run server-side: wait for completion, do not poll in a loop.
 
 ## Finish
