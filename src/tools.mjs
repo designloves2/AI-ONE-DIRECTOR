@@ -16,8 +16,11 @@ import {
   generateKrea2,
   generateQwen21,
   generateH3,
+  generateKlein,
+  generateZImage,
   generateMusic,
-  generateRtx
+  generateRtx,
+  generateUpscale
 } from './generators.mjs';
 
 import {
@@ -88,7 +91,7 @@ export function registerTools(server) {
       shots: z.array(z.object({
         shotIndex: z.number(),
         purpose: z.string(),
-        durationSeconds: z.number().min(5).max(10),
+        durationSeconds: z.number().min(3).max(10),
         durationReason: z.string(),
         scenePrompt: z.string(),
         refImages: z.array(z.string()).optional(),
@@ -178,7 +181,98 @@ export function registerTools(server) {
     }
   );
 
-  // 6. generate_video_h3
+  // 6. generate_image_zimage
+  server.tool(
+    'generate_image_zimage',
+    'Generate image using Z-Image Turbo',
+    {
+      projectName: z.string(),
+      prompt: z.string(),
+      width: z.number().default(1024),
+      height: z.number().default(1024),
+      steps: z.number().default(8),
+      dryRun: z.boolean().default(false)
+    },
+    async ({ projectName, prompt, width, height, steps, dryRun }) => {
+      const projDir = getProjectPath(projectName);
+      const refsDir = path.join(projDir, 'refs');
+      const job = { mode: 't2i', prompt, width, height, steps };
+
+      const res = await generateZImage(job, { dryRun, outDir: refsDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      return formatToolResponse({
+        ok: true,
+        path: res.localFiles?.[0] || res.outputs?.[0]?.url || 'dry_run_ok',
+        seed: res.seed,
+        dryRun
+      });
+    }
+  );
+
+  // 7. generate_image_klein
+  server.tool(
+    'generate_image_klein',
+    'Generate or edit image using Flux2 Klein',
+    {
+      projectName: z.string(),
+      mode: z.enum(['t2i', 'i2i', 'edit', 'faceswap']).default('t2i'),
+      prompt: z.string(),
+      width: z.number().default(1024),
+      height: z.number().default(1024),
+      dryRun: z.boolean().default(false)
+    },
+    async ({ projectName, mode, prompt, width, height, dryRun }) => {
+      const projDir = getProjectPath(projectName);
+      const refsDir = path.join(projDir, 'refs');
+      const job = { mode, prompt, width, height };
+
+      const res = await generateKlein(job, { dryRun, outDir: refsDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      return formatToolResponse({
+        ok: true,
+        path: res.localFiles?.[0] || res.outputs?.[0]?.url || 'dry_run_ok',
+        seed: res.seed,
+        dryRun
+      });
+    }
+  );
+
+  // 8. generate_image_upscale
+  server.tool(
+    'generate_image_upscale',
+    'Upscale still image using SeedVR2',
+    {
+      projectName: z.string(),
+      imagePath: z.string(),
+      resolution: z.number().default(2048),
+      dryRun: z.boolean().default(false)
+    },
+    async ({ projectName, imagePath, resolution, dryRun }) => {
+      const cleanPath = sanitizePath(imagePath, projectName);
+      const projDir = getProjectPath(projectName);
+      const refsDir = path.join(projDir, 'refs');
+      const job = { image: cleanPath, resolution };
+
+      const res = await generateUpscale(job, { dryRun, outDir: refsDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      return formatToolResponse({
+        ok: true,
+        path: res.localFiles?.[0] || 'dry_run_ok',
+        dryRun
+      });
+    }
+  );
+
+  // 9. generate_video_h3
   server.tool(
     'generate_video_h3',
     'Generate video clip using MiniMax H3 (7+1 default: 0.5MP -> 1.6MP latent upscale, 10s)',
@@ -198,7 +292,7 @@ export function registerTools(server) {
       refImages: z.array(z.string()).optional(),
       firstFrame: z.string().optional(),
       lastFrame: z.string().optional(),
-      durationSeconds: z.number().min(5).max(10).default(10),
+      durationSeconds: z.number().min(3).max(10).default(10),
       aspect: z.string().default('16:9 Landscape'),
       dryRun: z.boolean().default(false)
     },
@@ -244,7 +338,70 @@ export function registerTools(server) {
     }
   );
 
-  // 7. media_quality_check
+  // 10. generate_video_rtx
+  server.tool(
+    'generate_video_rtx',
+    'Upscale or deblur video clip using RTX VSR',
+    {
+      projectName: z.string(),
+      videoPath: z.string(),
+      op: z.enum(['upscale', 'deblur', 'both']).default('upscale'),
+      scale: z.number().default(2.0),
+      quality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'ULTRA']).default('HIGH'),
+      dryRun: z.boolean().default(false)
+    },
+    async ({ projectName, videoPath, op, scale, quality, dryRun }) => {
+      const cleanPath = sanitizePath(videoPath, projectName);
+      const projDir = getProjectPath(projectName);
+      const outDir = path.join(projDir, 'final');
+      const job = { op, video: cleanPath, scale, quality };
+
+      const res = await generateRtx(job, { dryRun, outDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      return formatToolResponse({
+        ok: true,
+        videoPath: res.localFiles?.[0] || 'dry_run_ok',
+        dryRun
+      });
+    }
+  );
+
+  // 11. generate_music
+  server.tool(
+    'generate_music',
+    'Generate music or instrumental soundtrack via MusicMaker (acestep / minimax)',
+    {
+      projectName: z.string(),
+      engine: z.enum(['acestep', 'minimax']).default('minimax'),
+      caption: z.string(),
+      lyrics: z.string().optional(),
+      duration: z.number().default(30),
+      instrumental: z.boolean().default(true),
+      title: z.string().default('Soundtrack'),
+      dryRun: z.boolean().default(false)
+    },
+    async ({ projectName, engine, caption, lyrics, duration, instrumental, title, dryRun }) => {
+      const projDir = getProjectPath(projectName);
+      const audioDir = path.join(projDir, 'audio');
+      const job = { engine, caption, lyrics, duration, instrumental, title };
+
+      const res = await generateMusic(job, { dryRun, outDir: audioDir });
+      if (!res.ok) {
+        return formatToolResponse({ ok: false, error: res.error, stage: res.stage });
+      }
+
+      return formatToolResponse({
+        ok: true,
+        audioPath: res.localFiles?.[0] || 'dry_run_ok',
+        dryRun
+      });
+    }
+  );
+
+  // 12. media_quality_check
   server.tool(
     'media_quality_check',
     'Cheap numeric check for resolution, duration, freeze, and blackouts',
@@ -267,7 +424,7 @@ export function registerTools(server) {
     }
   );
 
-  // 8. media_extract_grid
+  // 13. media_extract_grid
   server.tool(
     'media_extract_grid',
     'Extract representative frames and tile into ONE lightweight grid image for visual review',
@@ -294,7 +451,7 @@ export function registerTools(server) {
     }
   );
 
-  // 9. stt_verify
+  // 14. stt_verify
   server.tool(
     'stt_verify',
     'Transcribe video audio using Whisper and verify script adherence',
@@ -316,7 +473,7 @@ export function registerTools(server) {
     }
   );
 
-  // 10. record_review_verdict
+  // 15. record_review_verdict
   server.tool(
     'record_review_verdict',
     'Record one-look review verdict (PASS/FAIL/ADOPT) + one-line reason',
@@ -366,7 +523,7 @@ export function registerTools(server) {
     }
   );
 
-  // 11. media_concat_clips
+  // 16. media_concat_clips
   server.tool(
     'media_concat_clips',
     'Stitch passed video clips together into a single final video',
@@ -389,7 +546,7 @@ export function registerTools(server) {
     }
   );
 
-  // 12. media_text_overlay
+  // 17. media_text_overlay
   server.tool(
     'media_text_overlay',
     'Overlay Korean subtitles/typography using FFmpeg',
@@ -421,7 +578,7 @@ export function registerTools(server) {
     }
   );
 
-  // 13. project_save_report
+  // 18. project_save_report
   server.tool(
     'project_save_report',
     'Save final markdown report and mark project completed',

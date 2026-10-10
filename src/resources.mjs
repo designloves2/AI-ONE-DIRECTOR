@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.mjs';
-import { getProjectPath } from './projects.mjs';
 
 export function registerResources(server) {
   // 1. Director Core Rules
@@ -38,7 +37,41 @@ export function registerResources(server) {
     }
   );
 
-  // 3. Review Rubric
+  // 3. Short Drama Genre Profile
+  server.resource(
+    'genre-drama',
+    'director://skills/genres/drama',
+    async (uri) => {
+      const filePath = path.join(config.rootDir, 'skills', 'genres', 'short-drama.md');
+      const text = fs.readFileSync(filePath, 'utf8');
+      return {
+        contents: [{
+          uri: uri.href,
+          text,
+          mimeType: 'text/markdown'
+        }]
+      };
+    }
+  );
+
+  // 4. Vlog / Short-form Genre Profile
+  server.resource(
+    'genre-vlog',
+    'director://skills/genres/vlog',
+    async (uri) => {
+      const filePath = path.join(config.rootDir, 'skills', 'genres', 'vlog.md');
+      const text = fs.readFileSync(filePath, 'utf8');
+      return {
+        contents: [{
+          uri: uri.href,
+          text,
+          mimeType: 'text/markdown'
+        }]
+      };
+    }
+  );
+
+  // 5. Review Rubric
   server.resource(
     'review-rubric',
     'director://skills/rubric',
