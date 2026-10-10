@@ -61,10 +61,12 @@ with ffmpeg. In-video text that is reviewed = only text that already exists in t
 - Shot list = the single artifact of the scenario step. Per shot: purpose, length (+why), scene, needed reference images,
   narration/dialogue, music yes/no. Every later step works from this table.
 - Reference images for video: **Krea2 (`generate_image_krea2`) is the mandatory default engine**.
-  **CRITICAL RULE: Claude MUST generate ALL needed reference assets (product, character, key props) before rendering clips.**
-  Never generate only 1 generic product image if characters or specific environments appear.
-  If a human character appears in any shot (e.g. eating, reacting), Claude MUST generate a realistic character reference image with Krea2 first, and inject BOTH product and character via H3 multi-reference (`<Picture 1>`, `<Picture 2>`). This eliminates generic plastic AI faces and guarantees character consistency.
-  The owner's attached images (e.g. product) are used as-is; all missing assets are generated with Krea2. Drama: build a character reference sheet first, use it in every shot.
+  **CRITICAL RULE: Pre-generate a Reference Asset Pool (3~6 images) before rendering clips.**
+  - Identify all unique visual assets needed across the whole video (product front, cross-section/macro, character expressions, packaging/tray, etc.) and generate them up front into `refs/` with Krea2.
+  - **Do NOT inject all images identically to every shot.** Each clip takes only the specific references it needs (and varying quantities, e.g. 1~3 images) mapped from this shared pool (e.g. [1,3] for shot 1; [1,2] for shot 2; [1,4,5] for shot 3).
+  - This guarantees cross-shot character and product consistency while maintaining clean focus per shot.
+  - If a human character appears in any shot (e.g. eating, reacting), a realistic character reference MUST be in the pool, injected alongside the product via H3 multi-reference (`<Picture 1>`, `<Picture 2>`).
+  - The owner's attached images (e.g. product) are used as-is; all missing assets are generated with Krea2. Drama: build a character reference sheet first, use it in every shot.
 
 ## Genre profiles (short files, load only the requested one)
 Common pipeline; a profile sets: default aspect + length range, scenario principle, review weights + instant-fail items,

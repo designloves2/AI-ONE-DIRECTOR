@@ -15,11 +15,12 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
 
 ## Flow (details live in the core resource)
 `project_init` -> scenario/shot list (`project_save_scenario`)
--> **Mandatory Reference Assets Phase (Krea2 Default)**:
-   - Generate ALL required reference images with **Krea2 (`generate_image_krea2`)**.
-   - Do NOT stop at 1 product image. If an actor/customer appears (e.g. eating, smiling, reacting), **MUST generate a realistic character reference with Krea2** before rendering!
-   - If props/environment matter, generate them as well.
--> per shot: `generate_video_h3` (inject `<Picture 1>` product + `<Picture 2>` character when both appear)
+-> **Pre-generate Reference Asset Pool (Krea2 Default)**:
+   - Identify ALL unique visual assets across the entire video (e.g. product front, cross-section/macro, character eating, character smiling, tray/packaging; e.g. 3~6 images).
+   - Generate all of them up front with **Krea2 (`generate_image_krea2`)** into `refs/`.
+-> per shot: `generate_video_h3`
+   - Selectively inject ONLY the relevant references from the pool for that specific shot (e.g. [1,3] for shot 1; [1,2] for shot 2; [1,4,5] for shot 3).
+   - Number of injected images varies per shot (1~3 images) based on what that scene actually depicts.
 -> `media_quality_check` -> `stt_verify` (if speech) -> `media_extract_grid` (ONE grid)
 -> score -> `record_review_verdict` -> `media_concat_clips` -> `media_text_overlay` -> optional `generate_music`
 -> `project_save_report`.
@@ -31,8 +32,11 @@ pass / fail / retry / adopt / report. Chat with the owner in Korean, plain wordi
   - **Customer Reaction**: 3 ~ 5s (punchy genuine delight)
   - **Lifestyle / Story Action**: 5 ~ 8s (context and benefit)
   - **Hero Ending**: 4 ~ 6s (brand lock and slogan)
-- **ALL References Generated (Krea2 Default)**: Never generate only 1 generic product reference if human characters or specific environments appear. Generate character references with Krea2 so human skin/expressions look real and natural, not generic plastic AI faces.
-- **Multi-Reference Injection**: When a shot includes both a product and a character, inject BOTH (`refImages: [refProduct, refCharacter]`) and label them `<Picture 1>` and `<Picture 2>` in the prompt.
+- **Asset Pool & Selective Multi-Reference Injection**:
+  - Do NOT apply the same image uniformly to every shot.
+  - Pre-generate an asset pool (3~6 images) covering all needed subjects/angles with Krea2 up front.
+  - Inject only the necessary references (and differing counts per shot, e.g. 1~3 images) for each clip from this shared pool.
+  - This ensures cross-shot consistency (reusing identical character/product assets) while keeping each shot cleanly focused on its specific visual action.
 - Review is one look, one verdict: PASS/FAIL per item + one-line fail reason. Never re-review a passed clip.
 - Numbers first (ffprobe/STT). Numeric fail -> regenerate without looking.
 - Max 3 attempts per clip; then ADOPT the best attempt, flag it in the report, keep going. Never stop to ask.

@@ -10,11 +10,15 @@
 *A standard 30-second commercial consists of 4 to 6 varied, fast-paced shots (e.g. 4s + 8s + 5s + 8s + 5s = 30s). Never uniformly slice into 10s x 3.*
 
 ## Key Rules
+- **Reference Asset Pool & Selective Shot Mapping**:
+  - Pre-generate an asset pool (product angles, macro cross-section, character expressions, packaging/tray) using **Krea2**.
+  - **Do NOT inject all images identically to every shot.**
+  - Selectively map only the necessary reference images (and differing counts: 1~3 images) per shot from this shared pool.
+  - This ensures cross-shot consistency while keeping each shot cleanly focused on its specific visual action.
 - **Product Match is Critical**: Product shape, colors, and package logo MUST match the reference image. Any deviation is an instant fail.
 - **Mandatory Human Character Reference (Krea2)**:
-  - If a human model/customer appears (e.g. taking a bite, reacting with delight), **NEVER rely on text prompts alone**.
-  - A realistic, highly detailed character reference image MUST be generated with **Krea2** first (natural skin pore textures, specific clothing, realistic Korean model look).
-  - Use H3 Multi-Reference: `<Picture 1>` for Product, `<Picture 2>` for Character.
+  - If a human model/customer appears, pre-generate realistic character reference image(s) with **Krea2** into the asset pool.
+  - Inject character reference into character-focused shots alongside product reference (`<Picture 1>` product, `<Picture 2>` character).
 - **Korean Typography**: Overlay via FFmpeg in the edit step. Never let video diffusion draw Korean text.
 - **Aspect Ratio**: 16:9 Landscape for TV/Web commercial, 9:16 Portrait for Social/Short-form ad.
 - **Audio Balance**: Crisp narration/soundscape, non-intrusive upbeat background music.
