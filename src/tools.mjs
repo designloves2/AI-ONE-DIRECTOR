@@ -507,21 +507,52 @@ ${pObj.non_diegetic_music || 'N/A'}
   // 12. generate_music
   server.tool(
     'generate_music',
-    'Generate music or instrumental soundtrack via MusicMaker (acestep / minimax)',
+    'Generate music or instrumental soundtrack via MusicMaker (acestep / minimax / yue2)',
     {
       projectName: z.string(),
-      engine: z.enum(['acestep', 'minimax']).default('minimax'),
-      caption: z.string(),
-      lyrics: z.string().optional(),
-      duration: z.number().default(30),
-      instrumental: z.boolean().default(true),
-      title: z.string().default('Soundtrack'),
+      engine: z.enum(['acestep', 'minimax', 'yue2']).default('acestep'),
+      caption: z.string().describe('Style/genre/instrument caption, e.g. "warm K-ballad, piano and strings, female vocal"'),
+      lyrics: z.string().optional().describe('Lyrics with [Verse]/[Chorus] structure (omit for instrumental)'),
+      duration: z.number().default(30).describe('Duration in seconds (15-300)'),
+      instrumental: z.boolean().default(true).describe('Generate instrumental without vocals (default true)'),
+      title: z.string().default('Soundtrack').describe('Song/Track title'),
+      bpm: z.number().optional().describe('BPM tempo (for acestep/yue2)'),
+      keyscale: z.string().optional().describe('Musical key, e.g. "D minor", "C major"'),
+      vocalGender: z.enum(['male', 'female', 'auto']).optional().describe('Vocal gender'),
+      yue2Mode: z.enum(['text2music', 'cover']).optional().describe('YuE2 mode (text2music default or cover)'),
+      yue2CoverAudio: z.string().optional().describe('Path to source recording for YuE2 cover mode'),
       dryRun: z.boolean().default(false)
     },
-    async ({ projectName, engine, caption, lyrics, duration, instrumental, title, dryRun }) => {
+    async ({
+      projectName,
+      engine,
+      caption,
+      lyrics,
+      duration,
+      instrumental,
+      title,
+      bpm,
+      keyscale,
+      vocalGender,
+      yue2Mode,
+      yue2CoverAudio,
+      dryRun
+    }) => {
       const projDir = getProjectPath(projectName);
       const audioDir = path.join(projDir, 'audio');
-      const job = { engine, caption, lyrics, duration, instrumental, title };
+      const job = {
+        engine,
+        caption,
+        lyrics,
+        duration,
+        instrumental,
+        title,
+        ...(bpm !== undefined ? { bpm } : {}),
+        ...(keyscale ? { keyscale } : {}),
+        ...(vocalGender ? { vocalGender } : {}),
+        ...(yue2Mode ? { yue2Mode } : {}),
+        ...(yue2CoverAudio ? { yue2CoverAudio: sanitizePath(yue2CoverAudio, projectName) } : {})
+      };
 
       const res = await generateMusic(job, { dryRun, outDir: audioDir });
       if (!res.ok) {
@@ -531,6 +562,8 @@ ${pObj.non_diegetic_music || 'N/A'}
       return formatToolResponse({
         ok: true,
         audioPath: res.localFiles?.[0] || 'dry_run_ok',
+        engine,
+        duration,
         dryRun
       });
     }

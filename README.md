@@ -93,7 +93,7 @@ Ensure the corresponding model checkpoints are downloaded to your ComfyUI `model
 | `generate_video_h3` | Video Gen | MiniMax H3 video clip generation (7+1 1.6MP default) |
 | `generate_video_rtx` | Video Post | Upscale or deblur video clips using NVIDIA RTX VSR |
 | `enhance_face_refine` | Video Post | Track and restore small/smudged faces via H3 Face Refine (768x768 crop & stitch) |
-| `generate_music` | Audio Gen | Generate background music or songs (AceStep / MiniMax) |
+| `generate_music` | Audio Gen | Generate background music or songs (Ace-Step 1.5 / MiniMax Music 3 / YuE2) |
 | `media_quality_check` | Media Tool | Cheap numeric quality filter (resolution, freeze, blackout) |
 | `media_extract_grid` | Media Tool | Extract representative frames into ONE lightweight 2x2 grid |
 | `stt_verify` | Audio Tool | Whisper STT transcript check against dialogue script |
